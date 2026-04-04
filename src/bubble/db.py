@@ -36,9 +36,9 @@ async def init_graph(user_id: str) -> None:
     except Exception:
         pass  # already exists
 
-    # HNSW vector index on Episode.centroid — L2 cluster assignment ANN fallback.
-    # Used by _assign_to_snapshot to find the nearest existing belief when no
-    # SUPPORTS/CONTRADICTS edge connects the new Episode to an existing cluster.
+    # HNSW vector index on Episode.centroid — chain assignment ANN search.
+    # Used by check_new (contradict.py) to find the nearest existing Episode
+    # for the three-gate chain assignment cascade.
     try:
         await g.query(
             "CREATE VECTOR INDEX FOR (n:Episode) ON (n.centroid) "

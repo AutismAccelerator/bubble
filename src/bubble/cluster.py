@@ -5,7 +5,7 @@ from sklearn.cluster import HDBSCAN
 
 from .db import get_graph
 
-_MIN_CLUSTER_SIZE = int(os.getenv("BUBBLE_MIN_CLUSTER_SIZE", "3"))
+_CLUSTER_MIN_SIZE = int(os.getenv("BUBBLE_CLUSTER_MIN_SIZE", "3"))
 _CLUSTER_DIMS = int(os.getenv("BUBBLE_CLUSTER_DIMS", "128"))
 
 
@@ -15,7 +15,7 @@ async def get_clusters(user_id: str) -> dict[int, list[dict]]:
     All SegmentNodes in the graph are the active pool — promoted nodes are deleted at promotion.
 
     Returns {cluster_label: [node_dicts]} — noise (label -1) is excluded.
-    Returns empty dict if the pool is smaller than _MIN_CLUSTER_SIZE.
+    Returns empty dict if the pool is smaller than _CLUSTER_MIN_SIZE.
 
     Each node dict contains: id, raw_text, embedding (768-dim), intensity, valence,
     prior (str|None), timestamp (str).
@@ -42,7 +42,7 @@ async def get_clusters(user_id: str) -> dict[int, list[dict]]:
         for row in result.result_set
     ]
 
-    if len(nodes) < _MIN_CLUSTER_SIZE:
+    if len(nodes) < _CLUSTER_MIN_SIZE:
         return {}
 
     # Truncate to 128 dims (Matryoshka), then re-normalize.
@@ -53,7 +53,7 @@ async def get_clusters(user_id: str) -> dict[int, list[dict]]:
     matrix = raw / np.where(norms > 0, norms, 1.0)
 
     labels = HDBSCAN(
-        min_cluster_size=_MIN_CLUSTER_SIZE,
+        min_cluster_size=_CLUSTER_MIN_SIZE,
         metric="euclidean",  # equiv to cosine on unit vectors
     ).fit_predict(matrix)
 

@@ -33,7 +33,7 @@ _RERANK_ENABLED = os.getenv("BUBBLE_RERANK_ENABLED", "false").lower() == "true"
 
 def _confidence_label(confidence: float, episodic: bool = False) -> str:
     if episodic:
-        return "recently shifted, unverified"
+        return "vivid, unverified by convergence"
     if confidence > 0.75:
         return "established"
     if confidence >= 0.50:

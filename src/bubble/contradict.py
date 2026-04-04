@@ -16,7 +16,10 @@ import numpy as np
 from ._shared import MODEL, _client, _normalize, _now
 from .db import get_graph
 
-_T_DISTANCE = float(os.getenv("BUBBLE_T_DISTANCE", "0.4"))
+_CHAIN_MAX_DISTANCE = float(os.getenv("BUBBLE_CHAIN_MAX_DISTANCE", "0.4"))
+_NLI_ENABLED        = os.getenv("BUBBLE_ENABLE_NLI", "false").lower() == "true"
+_NLI_MODEL          = os.getenv("BUBBLE_NLI_MODEL", "cross-encoder/nli-deberta-v3-small")
+_NLI_ENDPOINT       = os.getenv("BUBBLE_NLI_ENDPOINT", "http://localhost:8999")
 
 _SNAPSHOT_SYSTEM = """\
 A sequence of memory records about the user is listed below, from earliest to most recent.
@@ -32,11 +35,26 @@ Rules:
 
 
 # ---------------------------------------------------------------------------
-# LLM relatedness check
+# Relatedness check (LLM or NLI)
 # ---------------------------------------------------------------------------
 
-async def _llm_related(summary_a: str, summary_b: str) -> bool:
-    """Returns True if the LLM considers these two beliefs about the same topic."""
+async def _related(summary_a: str, summary_b: str) -> bool:
+    """True if the two summaries are about the same topic.
+
+    BUBBLE_CHAIN_BACKEND=nli  — local NLI model, argmax != neutral → related.
+    BUBBLE_CHAIN_BACKEND=llm  — LLM yes/no (default).
+    """
+    if _NLI_ENABLED:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                _NLI_ENDPOINT,
+                json={"model": _NLI_MODEL, "premise": summary_a, "hypothesis": summary_b},
+            )
+            resp.raise_for_status()
+            scores = resp.json()  # [{"label": ..., "score": ...}, ...]
+        return max(scores, key=lambda x: x["score"])["label"].lower() != "neutral"
+
     answer = (await _client.messages.create(
         model=MODEL,
         max_tokens=8,
@@ -272,12 +290,12 @@ async def check_new(user_id: str, new_episode_id: str) -> None:
     closest_id, closest_summary, score = result.result_set[0]
 
     # Step 2 — Similarity threshold
-    if score < (1.0 - _T_DISTANCE):
+    if score < (1.0 - _CHAIN_MAX_DISTANCE):
         await _create_snapshot(g, new_episode_id, new_node["summary"], new_node["centroid"])
         return
 
-    # Step 3 — LLM relatedness check
-    if not await _llm_related(new_node["summary"], closest_summary):
+    # Step 3 — relatedness check
+    if not await _related(new_node["summary"], closest_summary):
         await _create_snapshot(g, new_episode_id, new_node["summary"], new_node["centroid"])
         return
 

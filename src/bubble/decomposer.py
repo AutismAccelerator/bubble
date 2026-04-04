@@ -23,6 +23,7 @@ _TOOL = {
                         "text":      {"type": "string"},
                         "intensity": {"type": "number", "minimum": 0.0, "maximum": 1.0},
                         "valence":   {"type": "string", "enum": ["pos", "neg", "neu"]},
+                        "reasoning":   {"type": "string"},
                     },
                     "required": ["text", "intensity", "valence"],
                 },
@@ -55,7 +56,7 @@ For each segment output:
     0.0–0.2  trivial, routine, or purely factual report. No personal stake.
     0.2–0.4  Transient, hedged, or passing reaction. Low commitment.
     0.4–0.6  Soft preference or mild claim on a meaningful topic. Some personal weight.
-    0.6–0.8  Explicit, committed stance on something personally significant. Clear conviction.
+    0.6–0.8  Explicit, committed stance on something. Clear conviction.
     0.8–1.0  Trajectory-defining. Major life events, identity-defining passions, or deeply held beliefs.
 
 - valence: pos | neg | neu
@@ -63,6 +64,8 @@ For each segment output:
     neg: rejecting, resented, or aversive
     neu: no clear stance
 
+- reasoning: a one sentence reasoning for me to debug
+    
 Rules:
 - Strip specific time references. Keep generalized frequency and scope qualifiers.
 - If a <prior> block is provided, use it only as context. All pronouns, referents must be resolved.\
@@ -112,6 +115,7 @@ async def decompose(message: str, prior: str | None = None) -> list[dict]:
         max_tokens=1024,
         temperature=0,
         system=_SYSTEM,
+        thinking={"type": "disabled"},
         tools=[_TOOL],
         tool_choice={"type": "tool", "name": "record_segments"},
         messages=messages,

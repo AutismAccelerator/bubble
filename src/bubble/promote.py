@@ -10,7 +10,7 @@ from .cluster import get_clusters
 from .contradict import check_new
 from .db import get_graph
 
-_THETA = float(os.getenv("BUBBLE_THETA", "0.2"))
+_PROMOTE_THRESHOLD = float(os.getenv("BUBBLE_PROMOTE_THRESHOLD", "0.2"))
 
 
 def _promo_score(nodes: list[dict]) -> tuple[float, float]:
@@ -30,7 +30,7 @@ def _dominant_valence(nodes: list[dict]) -> str:
     return counts.most_common(1)[0][0] if counts else "neu"
 
 
-async def promote(user_id: str, theta: float = _THETA) -> list[dict]:
+async def promote(user_id: str, theta: float = _PROMOTE_THRESHOLD) -> list[dict]:
     """
     Evaluate all Layer 0 clusters for promotion to Layer 1.
 

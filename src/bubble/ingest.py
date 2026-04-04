@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import uuid
 
 from .archive import read_segments, write_segment
@@ -10,7 +11,7 @@ from .embed import embed
 from .decomposer import decompose
 
 log = logging.getLogger(__name__)
-_HIGH = 0.6
+_EPISODIC_THRESHOLD = float(os.getenv("BUBBLE_EPISODIC_THRESHOLD", "0.6"))
 
 
 async def _store_segment(
@@ -89,9 +90,9 @@ async def _route_segments(
     g = get_graph(user_id)
 
     episodic_items = [(i, seg, emb) for i, (seg, emb) in enumerate(zip(segments, embeddings))
-                      if seg["intensity"] >= _HIGH]
+                      if seg["intensity"] >= _EPISODIC_THRESHOLD]
     regular_items  = [(i, seg, emb) for i, (seg, emb) in enumerate(zip(segments, embeddings))
-                      if seg["intensity"] < _HIGH]
+                      if seg["intensity"] < _EPISODIC_THRESHOLD]
 
     regular_nodes, episodic_nodes = await asyncio.gather(
         asyncio.gather(*[_store_segment(g, seg, emb, prior) for _, seg, emb in regular_items]),
@@ -127,8 +128,8 @@ async def replay(user_id: str) -> dict:
     g = get_graph(user_id)
     embeddings = await asyncio.gather(*[embed(e["text"]) for e in entries])
 
-    episodic_items = [(e, emb) for e, emb in zip(entries, embeddings) if e["intensity"] >= _HIGH]
-    regular_items  = [(e, emb) for e, emb in zip(entries, embeddings) if e["intensity"] < _HIGH]
+    episodic_items = [(e, emb) for e, emb in zip(entries, embeddings) if e["intensity"] >= _EPISODIC_THRESHOLD]
+    regular_items  = [(e, emb) for e, emb in zip(entries, embeddings) if e["intensity"] < _EPISODIC_THRESHOLD]
 
     episodic_nodes, _ = await asyncio.gather(
         asyncio.gather(*[

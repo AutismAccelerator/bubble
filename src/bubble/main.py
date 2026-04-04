@@ -60,8 +60,7 @@ async def _status(user_id: str) -> None:
         ("Episode (episodic)",        "MATCH (n:Episode {episodic: true})  RETURN count(n)"),
         ("Episode (distilled)",       "MATCH (n:Episode {episodic: false}) RETURN count(n)"),
         ("SnapshotNode",              "MATCH (n:SnapshotNode) RETURN count(n)"),
-        ("SUPPORTS edges",            "MATCH ()-[r:SUPPORTS]->() RETURN count(r)"),
-        ("CONTRADICTS edges",         "MATCH ()-[r:CONTRADICTS]->() RETURN count(r)"),
+        ("FOLLOWED_BY edges",         "MATCH ()-[r:FOLLOWED_BY]->() RETURN count(r)"),
         ("SYNTHESIZES edges",         "MATCH ()-[r:SYNTHESIZES]->() RETURN count(r)"),
     ]:
         result = await g.query(cypher)
@@ -109,8 +108,8 @@ async def _query(user_id: str, query: str) -> None:
 
 
 async def _diagnose(user_id: str, json_out: bool = False) -> None:
-    theta        = float(os.getenv("BUBBLE_THETA",          "0.1"))
-    min_cluster  = int(os.getenv("BUBBLE_MIN_CLUSTER_SIZE", "2"))
+    theta        = float(os.getenv("BUBBLE_PROMOTE_THRESHOLD", "0.2"))
+    min_cluster  = int(os.getenv("BUBBLE_CLUSTER_MIN_SIZE",   "3"))
     t_similarity      = float(os.getenv("BUBBLE_T_SIMILARITY",     "0.4"))
     cluster_join_sim  = float(os.getenv("BUBBLE_CLUSTER_JOIN_SIM", "0.7"))
     nli_enabled       = os.getenv("BUBBLE_NLI_ENABLED", "false").lower() == "true"
@@ -167,12 +166,12 @@ async def _diagnose(user_id: str, json_out: bool = False) -> None:
 
     data = {
         "constants": {
-            "BUBBLE_THETA":            theta,
-            "BUBBLE_MIN_CLUSTER_SIZE": min_cluster,
-            "BUBBLE_T_SIMILARITY":     t_similarity,
-            "BUBBLE_CLUSTER_JOIN_SIM": cluster_join_sim,
-            "BUBBLE_NLI_ENABLED":      nli_enabled,
-            "BUBBLE_NLI_MODEL":        nli_model,
+            "BUBBLE_PROMOTE_THRESHOLD": theta,
+            "BUBBLE_CLUSTER_MIN_SIZE":  min_cluster,
+            "BUBBLE_T_SIMILARITY":      t_similarity,
+            "BUBBLE_CLUSTER_JOIN_SIM":  cluster_join_sim,
+            "BUBBLE_NLI_ENABLED":       nli_enabled,
+            "BUBBLE_NLI_MODEL":         nli_model,
         },
         "layer0": {
             "active_pool": total_active,
@@ -190,19 +189,19 @@ async def _diagnose(user_id: str, json_out: bool = False) -> None:
     # ── human-readable output ────────────────────────────────────
     co = data["constants"]
     print("-- Current constants -------------------------------------------")
-    print(f"  BUBBLE_THETA            {co['BUBBLE_THETA']}   (t_promo_score promotion threshold)")
-    print(f"  BUBBLE_MIN_CLUSTER_SIZE {co['BUBBLE_MIN_CLUSTER_SIZE']}    (HDBSCAN min_cluster_size)")
-    print(f"  BUBBLE_T_SIMILARITY     {co['BUBBLE_T_SIMILARITY']}   (contradiction distance ceiling)")
-    print(f"  BUBBLE_CLUSTER_JOIN_SIM {co['BUBBLE_CLUSTER_JOIN_SIM']}   (ANN fallback sim floor for L2 cluster join)")
-    print(f"  BUBBLE_NLI_ENABLED      {co['BUBBLE_NLI_ENABLED']}  (NLI stage in contradiction pipeline)")
+    print(f"  BUBBLE_PROMOTE_THRESHOLD {co['BUBBLE_PROMOTE_THRESHOLD']}   (t_promo_score promotion threshold)")
+    print(f"  BUBBLE_CLUSTER_MIN_SIZE  {co['BUBBLE_CLUSTER_MIN_SIZE']}    (HDBSCAN min_cluster_size)")
+    print(f"  BUBBLE_T_SIMILARITY      {co['BUBBLE_T_SIMILARITY']}   (contradiction distance ceiling)")
+    print(f"  BUBBLE_CLUSTER_JOIN_SIM  {co['BUBBLE_CLUSTER_JOIN_SIM']}   (ANN fallback sim floor for L2 cluster join)")
+    print(f"  BUBBLE_NLI_ENABLED       {co['BUBBLE_NLI_ENABLED']}  (NLI stage in contradiction pipeline)")
     if co["BUBBLE_NLI_ENABLED"]:
-        print(f"  BUBBLE_NLI_MODEL        {co['BUBBLE_NLI_MODEL']}")
+        print(f"  BUBBLE_NLI_MODEL         {co['BUBBLE_NLI_MODEL']}")
 
     l0 = data["layer0"]
     print("\n-- Layer 0 cluster report --------------------------------------")
     if not l0["clusters"]:
         print(f"  No clusters found. Active pool size: {l0['active_pool']}")
-        print(f"  (min_cluster_size={co['BUBBLE_MIN_CLUSTER_SIZE']} — lower if pool is large but nothing clusters)")
+        print(f"  (BUBBLE_CLUSTER_MIN_SIZE={co['BUBBLE_CLUSTER_MIN_SIZE']} — lower if pool is large but nothing clusters)")
     else:
         print(f"  Active pool: {l0['active_pool']}  clustered: {l0['clustered']}  noise: {l0['noise']}")
         print()
@@ -211,7 +210,7 @@ async def _diagnose(user_id: str, json_out: bool = False) -> None:
         for cl in l0["clusters"]:
             print(f"  {cl['label']:>7}  {cl['n']:>4}  {cl['avg_intensity']:>7.3f}  {cl['t_promo_score']:>7.4f}  {cl['action']}")
         print()
-        print(f"  theta = {co['BUBBLE_THETA']}  -- raise to promote fewer clusters, lower to promote more")
+        print(f"  BUBBLE_PROMOTE_THRESHOLD = {co['BUBBLE_PROMOTE_THRESHOLD']}  -- raise to promote fewer clusters, lower to promote more")
 
     td = data["episode_distances"]
     print("\n-- Episode pairwise distances (tune BUBBLE_T_SIMILARITY) -------")
