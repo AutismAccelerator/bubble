@@ -67,7 +67,7 @@ Rules:
 - Strip specific time references. Keep generalized frequency and scope qualifiers.
 - If a <prior> block is provided, use it only as context. All pronouns, referents must be resolved.\
 - Call record_segments with your result.\
-- Return empty array if the message is purely functional, transient, or contain no personal signal — commands, greetings, filler, or factual queries with no stance or emotion.
+- Return empty array if the message is purely functional, transient, or contain no personal signal — commands, greetings, filler, or factual queries.
 
 Edge Cases:
 Retraction: If the current message cancels or reverts a prior statement, invert the prior statement's meaning and inherit its intensity.

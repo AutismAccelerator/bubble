@@ -22,7 +22,7 @@ from .decomposer import decompose
 from .rerank import rerank
 
 _LONG_QUERY_WORDS = 30
-_CANDIDATES = 20
+_CANDIDATES = 3
 _TOP_K = 5
 _RERANK_ENABLED = os.getenv("BUBBLE_RERANK_ENABLED", "false").lower() == "true"
 
@@ -127,9 +127,11 @@ async def _retrieve_from_vecs(
     candidate_ids   = sorted(score_map, key=lambda nid: score_map[nid], reverse=True)
     candidate_snaps = [snap_map[nid] for nid in candidate_ids]
 
-    # Ensure summaries are valid before reranking (lazy LLM generation)
+    # Ensure summaries are valid before reranking (lazy LLM generation).
+    # Pass already-fetched valid/summary from ANN to skip the redundant DB query.
     summaries = await asyncio.gather(*[
-        ensure_snapshot_summary(g, snap["id"]) for snap in candidate_snaps
+        ensure_snapshot_summary(g, snap["id"], valid=snap["valid"], summary=snap["summary"])
+        for snap in candidate_snaps
     ])
     for snap, summary in zip(candidate_snaps, summaries):
         snap["summary"] = summary or ""
@@ -183,5 +185,6 @@ async def retrieve(user_id: str, query: str, top_k: int = _TOP_K) -> list[dict]:
         query_vecs = list(await asyncio.gather(*[embed(s["text"]) for s in segments]))
     else:
         query_vecs = [await embed(query)]
-
+    if not query_vecs:
+        return []
     return await _retrieve_from_vecs(g, query, query_vecs, top_k)

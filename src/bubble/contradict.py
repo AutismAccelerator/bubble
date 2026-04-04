@@ -163,20 +163,30 @@ async def _create_snapshot(g, episode_id: str, summary: str, centroid: list[floa
 # Lazy snapshot summary generation
 # ---------------------------------------------------------------------------
 
-async def ensure_snapshot_summary(g, snap_id: str) -> str | None:
+async def ensure_snapshot_summary(
+    g,
+    snap_id: str,
+    *,
+    valid: bool | None = None,
+    summary: str | None = None,
+) -> str | None:
     """
     Return the SnapshotNode summary, generating it lazily if valid=false or summary is null.
+
+    Pass `valid` and `summary` when already fetched (e.g. from ANN query) to skip the
+    redundant DB round-trip.
 
     Single-member chains: copy Episode summary directly (no LLM).
     Multi-member chains: LLM synthesis ordered by timestamp, episodic members last.
     """
-    result = await g.query(
-        "MATCH (snap:SnapshotNode {id: $id}) RETURN snap.summary, snap.valid",
-        {"id": snap_id},
-    )
-    if not result.result_set:
-        return None
-    summary, valid = result.result_set[0]
+    if valid is None or summary is None:
+        result = await g.query(
+            "MATCH (snap:SnapshotNode {id: $id}) RETURN snap.summary, snap.valid",
+            {"id": snap_id},
+        )
+        if not result.result_set:
+            return None
+        summary, valid = result.result_set[0]
     if valid and summary:
         return summary
 
