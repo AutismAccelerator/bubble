@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MODEL = os.getenv("BUBBLE_MODEL", "claude-haiku-4-5-20251001")
+MODEL = os.getenv("BUBBLE_MODEL", "claude-sonnet-4-6")
 _client = AsyncAnthropic()
 
 _SUMMARIZE_SYSTEM = """\

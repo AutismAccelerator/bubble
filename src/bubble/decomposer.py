@@ -33,47 +33,50 @@ _TOOL = {
 }
 
 _SYSTEM = """\
-Decompose a user message into atomic belief segments. Each segment must be \
-self-contained. Pronouns, determiners and referents must be resolved(Use <prior> block as context).
-Decompose when both halves are independently meaningful beliefs; merge when one is
+Decompose a user message into atomic segments. Each segment must be \
+self-contained.
+Decompose when segments are independently meaningful beliefs; merge when one is
   sentiment, evaluation, or elaboration of the other.
   
 For each segment output:
-- text: the atomic statement (preserve the user's own words closely)
+- text: the atomic statement
 - intensity: 0.0–1.0  personal significance — how much this will matter to this
-    person's life over time, not how emotionally it is expressed.
+    person's life.
     Two dimensions both contribute — neither alone is sufficient for a high score:
       Object significance: how personal and lasting is the subject?
         High: career, identity, health, relationships, major decisions
-        Low:  tools, tasks, routine activities, other people, external events
+        Low:  tools, tasks, routines, unimportant people, external events
       Expression certainty: how definitive is the claim?
         High: committed assertions, firm decisions, stated facts about the user
         Low:  epistemic uncertainty, perception verbs, hedged or conditional framing
     Certainty modifiers:
-      Hedging → lower by 0.15–0.20
+      Hedging → lower by 0.10–0.15
       Commitment → raise by 0.05–0.10
-    0.0–0.2  impersonal, trivial, routine, or no lasting meaning
-    0.2–0.4  transient or hedged; not a stable belief
-    0.4–0.6  soft preference or hedged claim about a significant topic
-    0.6–0.8  explicit, committed stance on something personally significant
-    0.8–1.0  trajectory-defining — major life events or identity-defining passions
+    0.0–0.2  trivial, routine, or purely factual report. No personal stake.
+    0.2–0.4  Transient, hedged, or passing reaction. Low commitment.
+    0.4–0.6  Soft preference or mild claim on a meaningful topic. Some personal weight.
+    0.6–0.8  Explicit, committed stance on something personally significant. Clear conviction.
+    0.8–1.0  Trajectory-defining. Major life events, identity-defining passions, or deeply held beliefs.
 
 - valence: pos | neg | neu
     pos: affirming, chosen, or wanted
     neg: rejecting, resented, or aversive
-    neu: factual with no clear stance
-    Split when both pos and neg are present — do not blend into neu.
+    neu: no clear stance
 
 Rules:
 - Strip specific time references. Keep generalized frequency and scope qualifiers.
-- Statements about other people or external events → intensity ≤ 0.2 unless the
-  impact is directly personal to the user.
-- Transient reactions, hyperbole, venting, and gratitude → intensity ≤ 0.2.
-- If a <prior> block is provided, use it only as context. 
+- If a <prior> block is provided, use it only as context. All pronouns, referents must be resolved.\
 - Call record_segments with your result.\
+- Return empty array if the message is purely functional, transient, or contain no personal signal — commands, greetings, filler, or factual queries with no stance or emotion.
 
 Edge Cases:
-Cancelling: When the current message retracts a prior statement, measure intensity of original statement and use its opposite meaning as current message. example: <prior>I robbed a bank</prior> "Just kidding" -> I didn't rob any bank 0.6
+Retraction: If the current message cancels or reverts a prior statement, invert the prior statement's meaning and inherit its intensity.
+Example:
+  prior: "I robbed a bank"
+  message: "Just kidding"
+  output:  { text: "I did not rob a bank", intensity: 0.6, valence: "pos"}
+
+
 """
 
 

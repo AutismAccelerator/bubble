@@ -16,19 +16,17 @@ import numpy as np
 from ._shared import MODEL, _client, _normalize, _now
 from .db import get_graph
 
-_T_SIMILARITY = float(os.getenv("BUBBLE_T_SIMILARITY", "0.4"))
+_T_DISTANCE = float(os.getenv("BUBBLE_T_DISTANCE", "0.4"))
 
 _SNAPSHOT_SYSTEM = """\
 A sequence of memory records about the user is listed below, from earliest to most recent.
 
 Rules:
 - The most recent memory takes precedence over earlier ones.
-- Episodic memories (marked with [episodic]) always represent the most recent stance,
-  regardless of position — present them last.
-- Earlier beliefs provide historical context.
-- Synthesize all memory into a single coherent narrative that honestly represents the full arc.
+- Earlier memory provides historical context.
+- Synthesize all memory into a single simplified coherent narrative that represents the full arc.
 - Output one concise paragraph.
-- Use third-person: "The user...".
+- No subject, start with verb.
 - Do not explain or justify.\
 """
 
@@ -239,7 +237,7 @@ async def ensure_snapshot_summary(g, snap_id: str) -> str | None:
 
 async def check_new(user_id: str, new_episode_id: str) -> None:
     """
-    Assign a newly created Episode to a topic chain (spec §3.8).
+    Assign a newly created Episode to a topic chain.
     Called by promote() and ingest._store_episodic() after Episode creation.
     """
     g = get_graph(user_id)
@@ -264,7 +262,7 @@ async def check_new(user_id: str, new_episode_id: str) -> None:
     closest_id, closest_summary, score = result.result_set[0]
 
     # Step 2 — Similarity threshold
-    if score < (1.0 - _T_SIMILARITY):
+    if score < (1.0 - _T_DISTANCE):
         await _create_snapshot(g, new_episode_id, new_node["summary"], new_node["centroid"])
         return
 

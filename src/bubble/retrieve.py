@@ -9,7 +9,7 @@ Flow:
   3. Ensure snapshot summaries are valid (lazy LLM if needed).
   4. Rerank candidates with reranker; keep top_k.
   5. For each result: traverse SYNTHESIZES → Episode members (ordered by timestamp).
-  6. Translate confidence floats to natural-language labels (spec §4.3).
+  6. Translate confidence floats to natural-language labels.
 """
 
 import asyncio
@@ -24,7 +24,7 @@ from .rerank import rerank
 _LONG_QUERY_WORDS = 30
 _CANDIDATES = 20
 _TOP_K = 5
-_RERANK_ENABLED = os.getenv("BUBBLE_RERANK_ENABLED", "true").lower() == "true"
+_RERANK_ENABLED = os.getenv("BUBBLE_RERANK_ENABLED", "false").lower() == "true"
 
 
 # ---------------------------------------------------------------------------

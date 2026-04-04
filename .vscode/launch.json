@@ -9,7 +9,7 @@
     "name": "diagnose",
     "type": "debugpy",
     "request": "launch",
-    "module": "src.hmcs.main",
+    "module": "src.bubble.main",
     "cwd": "${workspaceFolder}",
     "console": "integratedTerminal",
     "args": "${command:pickArgs}"
