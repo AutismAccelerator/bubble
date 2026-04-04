@@ -13,6 +13,7 @@ Built on event sourcing — the archive is the ground truth, the graph is always
 [Bubble: Belief Formation as Memory](link) — arXiv preprint
 
 ## How it works
+```
 [ raw input ]
                                │
                          ┌─────▼─────┐
@@ -65,11 +66,12 @@ Built on event sourcing — the archive is the ground truth, the graph is always
            default                            verbose
                │                                  │
          snapshot summary              episode chain + labels
-
+```
 ## Setup
 ### 1.run [Falkordb](https://github.com/falkordb/falkordb) 
+```bash
 docker run -e REDIS_ARGS="--appendonly yes --appendfsync everysec" -v <PATH>:/var/lib/falkordb/data -p 3000:3000 -p 6379:6379 -d --name falkordb falkordb/falkordb
-
+```
 ### 2.embedding model
 **note: command below is cpu version**
 ```bash
@@ -80,13 +82,14 @@ Or OpenAI compatible embedding api
 
 
 ### necessary configuration in your .env file
+```python
 ANTHROPIC_API_KEY=
 FALKORDB_HOST=localhost
 FALKORDB_PORT=6379
 BUBBLE_EMBED_MODEL=jinaai/jina-embeddings-v5-text-nano-clustering
 BUBBLE_EMBED_DIM=768
 BUBBLE_EMBED_ENDPOINT=http://localhost:8997
-
+```
 
 See the [.env.example](.env.example) for ALL tunable arguments.
 
