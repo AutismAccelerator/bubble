@@ -16,7 +16,7 @@ import asyncio
 import os
 
 from .contradict import ensure_snapshot_summary
-from .db import get_graph
+from .db import get_graph, init_graph
 from .embed import embed
 from .decomposer import decompose
 from .rerank import rerank
@@ -49,12 +49,17 @@ def _confidence_label(confidence: float, episodic: bool = False) -> str:
 
 async def _ann_candidates(g, query_vec: list[float], k: int) -> list[tuple[dict, float]]:
     """k-NN against SnapshotNode.centroid. Returns [(snap_dict, score)] descending."""
-    result = await g.query(
-        "CALL db.idx.vector.queryNodes('SnapshotNode', 'centroid', $k, vecf32($vec)) "
-        "YIELD node, score "
-        "RETURN node.id, node.summary, node.valid, score",
-        {"k": k, "vec": query_vec},
-    )
+    try:
+        result = await g.query(
+            "CALL db.idx.vector.queryNodes('SnapshotNode', 'centroid', $k, vecf32($vec)) "
+            "YIELD node, score "
+            "RETURN node.id, node.summary, node.valid, score",
+            {"k": k, "vec": query_vec},
+        )
+    except Exception:
+        # Index missing (uninitialized graph) — ensure it exists, return empty.
+        await init_graph(g.name.removeprefix("bubble:"))
+        return []
     out = []
     for row in result.result_set:
         snap = {
@@ -185,6 +190,4 @@ async def retrieve(user_id: str, query: str, top_k: int = _TOP_K) -> list[dict]:
         query_vecs = list(await asyncio.gather(*[embed(s["text"]) for s in segments]))
     else:
         query_vecs = [await embed(query)]
-    if not query_vecs:
-        return []
     return await _retrieve_from_vecs(g, query, query_vecs, top_k)
