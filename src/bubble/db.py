@@ -37,7 +37,7 @@ async def init_graph(user_id: str) -> None:
         pass  # already exists
 
     # HNSW vector index on Episode.centroid — chain assignment ANN search.
-    # Used by check_new (contradict.py) to find the nearest existing Episode
+    # Used by check_new (chain.py) to find the nearest existing Episode
     # for the three-gate chain assignment cascade.
     try:
         await g.query(

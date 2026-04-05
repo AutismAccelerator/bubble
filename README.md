@@ -4,7 +4,7 @@
 
 Most memory systems index everything and retrieve later. Bubble treats memory as a *formation* problem: a single weak signal is noise; a signal that returns from different directions, at different moments, with consistent weight, becomes belief.
 
-Built on event sourcing — the archive is the ground truth, the graph is always reconstructible from it.
+Built on event sourcing — the archive is the ground truth, the graph is always reconstructible from it. 
 
 ---
 
@@ -47,16 +47,16 @@ Built on event sourcing — the archive is the ground truth, the graph is always
                        │  episode  │  immutable
                        └─────┬─────┘
                              │
-                     same topic chain?
+                     same topic chain?(NLI)
                       yes │       │ no
                           │       │
                ┌──────────▼─┐   ┌▼────────────┐
-               │ ... ──► e  │   │     e       │  new chain
+   joins chain │ ... ──► e  │   │     e       │  new chain
                └──────────┬─┘   └─────┬───────┘
                           │           │
                     ┌─────▼───────────▼─────┐
                     │       snapshot        │
-                    │  centroid  │  summary │
+                    │  centroid  │  summary │ 
                     │  (eager)   │  (lazy)  │
                     └───────────┬───────────┘
                                 │
@@ -65,7 +65,7 @@ Built on event sourcing — the archive is the ground truth, the graph is always
                ┌────────────────┴─────────────────┐
            default                            verbose
                │                                  │
-         snapshot summary              episode chain + labels
+         snapshot summary             with episode chain + labels
 ```
 ## Setup
 ### 1.run [Falkordb](https://github.com/falkordb/falkordb) 
@@ -75,10 +75,16 @@ docker run -e REDIS_ARGS="--appendonly yes --appendfsync everysec" -v <PATH>:/va
 ### 2.embedding model
 **note: command below is cpu version**
 ```bash
-docker run --name tei-embedding -d -p 8997:80 -v <PATH>:/data --pull always ghcr.io/huggingface/text-embeddings-inference:cpu-latest --model-id jinaai/jina-embeddings-v5-text-nano-clustering
-```
+docker run --name tei-embedding -d -p 8997:80 -v <PATH>:/data --pull always ghcr.io/huggingface/text-embeddings-inference:cpu-latest --model-id nomic-ai/nomic-embed-text-v1.5
 
-Or OpenAI compatible embedding api
+```
+Or embedding cloud api
+
+### 3.NLI model(Optional, but recommended, saves some LLM calls)
+**note: command below is cpu version**
+```bash
+docker run --name tei-nli -d -p 8999:80 -v /mnt/g/docker-data/volumes/tei:/data --pull always ghcr.io/huggingface/text-embeddings-inference:cpu-latest --model-id cross-encoder/nli-deberta-v3-small
+```
 
 
 ### necessary configuration in your .env file
@@ -86,13 +92,28 @@ Or OpenAI compatible embedding api
 ANTHROPIC_API_KEY=
 FALKORDB_HOST=localhost
 FALKORDB_PORT=6379
-BUBBLE_EMBED_MODEL=jinaai/jina-embeddings-v5-text-nano-clustering
 BUBBLE_EMBED_DIM=768
-BUBBLE_EMBED_ENDPOINT=http://localhost:8997
+BUBBLE_EMBED_ENDPOINT=http://localhost:8997/v1/embeddings
+
+#If you have NLI setup
+BUBBLE_ENABLE_NLI=true
+BUBBLE_NLI_ENDPOINT=http://localhost:8999/predict
 ```
 
-See the [.env.example](.env.example) for ALL tunable arguments.
+## How to use (extremely easy and clean)
+### ingest
+```python
+import bubble
+bubble.process(user_id, content, prior)
+```
+prior: the context of the content, for example prior messages
+### retrieve
+```python
+import bubble
+memory_user = await bubble.retrieve(user_id, query)
+```
 
+## Tuning
+See [.env.example](.env.example) for ALL tunable arguments.
 
-## 
-currently works well with `jinaai/jina-embeddings-v5-text-nano-clustering`
+Highly customizable !

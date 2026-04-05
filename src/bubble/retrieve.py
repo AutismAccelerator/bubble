@@ -15,14 +15,14 @@ Flow:
 import asyncio
 import os
 
-from .contradict import ensure_snapshot_summary
+from .chain import ensure_snapshot_summary
 from .db import get_graph, init_graph
 from .embed import embed
 from .decomposer import decompose
 from .rerank import rerank
 
 _LONG_QUERY_WORDS = 30
-_TOP_K = 3
+_TOP_K = 5
 _RERANK_ENABLED = os.getenv("BUBBLE_RERANK_ENABLED", "false").lower() == "true"
 
 

@@ -7,7 +7,7 @@ from collections import Counter
 from ._shared import _centroid, _now, _summarize
 from .archive import write_segment
 from .cluster import get_clusters
-from .contradict import check_new
+from .chain import check_new
 from .db import get_graph
 
 _PROMOTE_THRESHOLD = float(os.getenv("BUBBLE_PROMOTE_THRESHOLD", "0.2"))

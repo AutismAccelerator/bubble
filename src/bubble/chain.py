@@ -17,9 +17,8 @@ from ._shared import MODEL, _client, _normalize, _now
 from .db import get_graph
 
 _CHAIN_MAX_DISTANCE = float(os.getenv("BUBBLE_CHAIN_MAX_DISTANCE", "0.4"))
-_NLI_ENABLED        = os.getenv("BUBBLE_ENABLE_NLI", "false").lower() == "true"
-_NLI_MODEL          = os.getenv("BUBBLE_NLI_MODEL", "cross-encoder/nli-deberta-v3-small")
-_NLI_ENDPOINT       = os.getenv("BUBBLE_NLI_ENDPOINT", "http://localhost:8999")
+_NLI_ENABLED = os.getenv("BUBBLE_ENABLE_NLI", "false").lower() == "true"
+_NLI_ENDPOINT = os.getenv("BUBBLE_NLI_ENDPOINT", "http://localhost:8999/predict")
 
 _SNAPSHOT_SYSTEM = """\
 A sequence of memory records about the user is listed below, from earliest to most recent.
@@ -33,10 +32,10 @@ Rules:
 - Do not explain or justify.\
 """
 
-
 # ---------------------------------------------------------------------------
 # Relatedness check (LLM or NLI)
 # ---------------------------------------------------------------------------
+
 
 async def _related(summary_a: str, summary_b: str) -> bool:
     """True if the two summaries are about the same topic.
@@ -46,28 +45,35 @@ async def _related(summary_a: str, summary_b: str) -> bool:
     """
     if _NLI_ENABLED:
         import httpx
+
         async with httpx.AsyncClient() as client:
             resp = await client.post(
                 _NLI_ENDPOINT,
-                json={"model": _NLI_MODEL, "premise": summary_a, "hypothesis": summary_b},
+                json={"inputs": [summary_a, summary_b]},
+                headers={"Content-Type": "application/json", "Accept": "application/json"},
             )
             resp.raise_for_status()
             scores = resp.json()  # [{"label": ..., "score": ...}, ...]
         return max(scores, key=lambda x: x["score"])["label"].lower() != "neutral"
 
-    answer = (await _client.messages.create(
-        model=MODEL,
-        max_tokens=8,
-        system="You are a memory topic classifier. Reply with exactly 'yes' or 'no'.",
-        messages=[{
-            "role": "user",
-            "content": (
-                f"Are these two beliefs about the same topic or subject?\n\n"
-                f"A: {summary_a}\n"
-                f"B: {summary_b}"
-            ),
-        }],
-    )).content[0].text.strip().lower()
+    answer = (
+        (
+            await _client.messages.create(
+                model=MODEL,
+                max_tokens=8,
+                system="You are a memory topic classifier. Reply with exactly 'yes' or 'no'.",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": (f"Are these two beliefs about the same topic or subject?\n\nA: {summary_a}\nB: {summary_b}"),
+                    }
+                ],
+            )
+        )
+        .content[0]
+        .text.strip()
+        .lower()
+    )
     return answer.startswith("y")
 
 
@@ -75,15 +81,14 @@ async def _related(summary_a: str, summary_b: str) -> bool:
 # Chain traversal
 # ---------------------------------------------------------------------------
 
+
 async def _traverse_to_tail(g, start_id: str) -> str:
     """
     Follow FOLLOWED_BY edges from start_id to the chain tail
     (the node with no outgoing FOLLOWED_BY edge).
     """
     result = await g.query(
-        "MATCH (start:Episode {id: $id})-[:FOLLOWED_BY*0..]->(tail:Episode) "
-        "WHERE NOT (tail)-[:FOLLOWED_BY]->() "
-        "RETURN tail.id LIMIT 1",
+        "MATCH (start:Episode {id: $id})-[:FOLLOWED_BY*0..]->(tail:Episode) WHERE NOT (tail)-[:FOLLOWED_BY]->() RETURN tail.id LIMIT 1",
         {"id": start_id},
     )
     if result.result_set:
@@ -95,10 +100,10 @@ async def _traverse_to_tail(g, start_id: str) -> str:
 # Graph writers
 # ---------------------------------------------------------------------------
 
+
 async def _wire_follows(g, from_id: str, to_id: str) -> None:
     await g.query(
-        "MATCH (a:Episode {id: $a}), (b:Episode {id: $b}) "
-        "CREATE (a)-[:FOLLOWED_BY]->(b)",
+        "MATCH (a:Episode {id: $a}), (b:Episode {id: $b}) CREATE (a)-[:FOLLOWED_BY]->(b)",
         {"a": from_id, "b": to_id},
     )
 
@@ -107,15 +112,16 @@ async def _wire_follows(g, from_id: str, to_id: str) -> None:
 # Graph loaders
 # ---------------------------------------------------------------------------
 
+
 def _rows_to_episode_dicts(rows) -> list[dict]:
     return [
         {
-            "id":        r[0],
-            "summary":   r[1],
-            "centroid":  r[2],
-            "episodic":  bool(r[3]),
+            "id": r[0],
+            "summary": r[1],
+            "centroid": r[2],
+            "episodic": bool(r[3]),
             "timestamp": r[4],
-            "valence":   r[5] or "neu",
+            "valence": r[5] or "neu",
         }
         for r in rows
         if r[2] is not None
@@ -124,8 +130,7 @@ def _rows_to_episode_dicts(rows) -> list[dict]:
 
 async def _load_node(g, episode_id: str) -> dict | None:
     result = await g.query(
-        "MATCH (t:Episode {id: $id}) "
-        "RETURN t.id, t.summary, t.centroid, t.episodic, t.timestamp, t.valence",
+        "MATCH (t:Episode {id: $id}) RETURN t.id, t.summary, t.centroid, t.episodic, t.timestamp, t.valence",
         {"id": episode_id},
     )
     rows = _rows_to_episode_dicts(result.result_set)
@@ -136,10 +141,10 @@ async def _load_node(g, episode_id: str) -> dict | None:
 # SnapshotNode management
 # ---------------------------------------------------------------------------
 
+
 async def _recompute_snapshot_centroid(g, snap_id: str) -> None:
     result = await g.query(
-        "MATCH (snap:SnapshotNode {id: $id})-[:SYNTHESIZES]->(t:Episode) "
-        "RETURN t.centroid",
+        "MATCH (snap:SnapshotNode {id: $id})-[:SYNTHESIZES]->(t:Episode) RETURN t.centroid",
         {"id": snap_id},
     )
     centroids = [row[0] for row in result.result_set if row[0] is not None]
@@ -154,9 +159,7 @@ async def _recompute_snapshot_centroid(g, snap_id: str) -> None:
 
 async def _join_snapshot(g, snap_id: str, new_node_id: str) -> None:
     await g.query(
-        "MATCH (snap:SnapshotNode {id: $snap_id}), (t:Episode {id: $tid}) "
-        "CREATE (snap)-[:SYNTHESIZES]->(t) "
-        "SET snap.valid = false",
+        "MATCH (snap:SnapshotNode {id: $snap_id}), (t:Episode {id: $tid}) CREATE (snap)-[:SYNTHESIZES]->(t) SET snap.valid = false",
         {"snap_id": snap_id, "tid": new_node_id},
     )
     await _recompute_snapshot_centroid(g, snap_id)
@@ -165,14 +168,11 @@ async def _join_snapshot(g, snap_id: str, new_node_id: str) -> None:
 async def _create_snapshot(g, episode_id: str, summary: str, centroid: list[float]) -> None:
     snap_id = str(uuid.uuid4())
     await g.query(
-        "CREATE (snap:SnapshotNode {"
-        "  id: $id, summary: $summary, centroid: vecf32($centroid), valid: true, timestamp: $ts"
-        "})",
+        "CREATE (snap:SnapshotNode {  id: $id, summary: $summary, centroid: vecf32($centroid), valid: true, timestamp: $ts})",
         {"id": snap_id, "summary": summary, "centroid": centroid, "ts": _now()},
     )
     await g.query(
-        "MATCH (snap:SnapshotNode {id: $snap_id}), (t:Episode {id: $tid}) "
-        "CREATE (snap)-[:SYNTHESIZES]->(t)",
+        "MATCH (snap:SnapshotNode {id: $snap_id}), (t:Episode {id: $tid}) CREATE (snap)-[:SYNTHESIZES]->(t)",
         {"snap_id": snap_id, "tid": episode_id},
     )
 
@@ -180,6 +180,7 @@ async def _create_snapshot(g, episode_id: str, summary: str, centroid: list[floa
 # ---------------------------------------------------------------------------
 # Lazy snapshot summary generation
 # ---------------------------------------------------------------------------
+
 
 async def ensure_snapshot_summary(
     g,
@@ -209,15 +210,14 @@ async def ensure_snapshot_summary(
         return summary
 
     result = await g.query(
-        "MATCH (snap:SnapshotNode {id: $id})-[:SYNTHESIZES]->(t:Episode) "
-        "RETURN t.id, t.summary, t.episodic, t.timestamp",
+        "MATCH (snap:SnapshotNode {id: $id})-[:SYNTHESIZES]->(t:Episode) RETURN t.id, t.summary, t.episodic, t.timestamp",
         {"id": snap_id},
     )
     members = [
         {
-            "id":        r[0],
-            "summary":   r[1],
-            "episodic":  bool(r[2]),
+            "id": r[0],
+            "summary": r[1],
+            "episodic": bool(r[2]),
             "timestamp": r[3] or "",
         }
         for r in result.result_set
@@ -230,7 +230,7 @@ async def ensure_snapshot_summary(
         new_summary = members[0]["summary"]
     else:
         non_ep = sorted([m for m in members if not m["episodic"]], key=lambda m: m["timestamp"])
-        ep     = sorted([m for m in members if m["episodic"]],     key=lambda m: m["timestamp"])
+        ep = sorted([m for m in members if m["episodic"]], key=lambda m: m["timestamp"])
         ordered = non_ep + ep
 
         count = len(ordered)
@@ -245,12 +245,18 @@ async def ensure_snapshot_summary(
                 label = f"Belief {i + 1}{tag}"
             lines.append(f"{label}: {m['summary']}")
 
-        new_summary = (await _client.messages.create(
-            model=MODEL,
-            max_tokens=256,
-            system=_SNAPSHOT_SYSTEM,
-            messages=[{"role": "user", "content": "\n\n".join(lines)}],
-        )).content[0].text.strip()
+        new_summary = (
+            (
+                await _client.messages.create(
+                    model=MODEL,
+                    max_tokens=256,
+                    system=_SNAPSHOT_SYSTEM,
+                    messages=[{"role": "user", "content": "\n\n".join(lines)}],
+                )
+            )
+            .content[0]
+            .text.strip()
+        )
 
     await g.query(
         "MATCH (snap:SnapshotNode {id: $id}) SET snap.summary = $summary, snap.valid = true",
@@ -263,6 +269,7 @@ async def ensure_snapshot_summary(
 # Public API
 # ---------------------------------------------------------------------------
 
+
 async def check_new(user_id: str, new_episode_id: str) -> None:
     """
     Assign a newly created Episode to a topic chain.
@@ -273,12 +280,9 @@ async def check_new(user_id: str, new_episode_id: str) -> None:
     if new_node is None or new_node["centroid"] is None:
         return
 
-    # Step 1 — ANN top-1 (k=2 to skip self if already indexed)
+    # Step 1 — ANN top-1 (k=3: self may occupy a slot if already indexed)
     result = await g.query(
-        "CALL db.idx.vector.queryNodes('Episode', 'centroid', 2, vecf32($vec)) "
-        "YIELD node, score WHERE node.id <> $id "
-        "RETURN node.id, node.summary, score "
-        "LIMIT 1",
+        "CALL db.idx.vector.queryNodes('Episode', 'centroid', 2, vecf32($vec)) YIELD node, score WHERE node.id <> $id RETURN node.id, node.summary, score LIMIT 1",
         {"vec": new_node["centroid"], "id": new_episode_id},
     )
 
@@ -290,7 +294,7 @@ async def check_new(user_id: str, new_episode_id: str) -> None:
     closest_id, closest_summary, score = result.result_set[0]
 
     # Step 2 — Similarity threshold
-    if score < (1.0 - _CHAIN_MAX_DISTANCE):
+    if score > _CHAIN_MAX_DISTANCE:
         await _create_snapshot(g, new_episode_id, new_node["summary"], new_node["centroid"])
         return
 

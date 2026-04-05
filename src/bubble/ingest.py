@@ -5,7 +5,7 @@ import uuid
 
 from .archive import read_segments, write_segment
 from ._shared import _now, _summarize
-from .contradict import check_new
+from .chain import check_new
 from .db import get_graph
 from .embed import embed
 from .decomposer import decompose
@@ -131,26 +131,22 @@ async def replay(user_id: str) -> dict:
     episodic_items = [(e, emb) for e, emb in zip(entries, embeddings) if e["intensity"] >= _EPISODIC_THRESHOLD]
     regular_items  = [(e, emb) for e, emb in zip(entries, embeddings) if e["intensity"] < _EPISODIC_THRESHOLD]
 
-    episodic_nodes, _ = await asyncio.gather(
-        asyncio.gather(*[
-            _create_episodic_node(
-                g,
-                {"text": e["text"], "intensity": e["intensity"], "valence": e["valence"]},
-                emb, e.get("prior"), e["timestamp"],
-            )
-            for e, emb in episodic_items
-        ]),
-        asyncio.gather(*[
-            _store_segment(
-                g,
-                {"text": e["text"], "intensity": e["intensity"], "valence": e["valence"]},
-                emb, e.get("prior"), e["timestamp"],
-            )
-            for e, emb in regular_items
-        ]),
-    )
+    await asyncio.gather(*[
+        _store_segment(
+            g,
+            {"text": e["text"], "intensity": e["intensity"], "valence": e["valence"]},
+            emb, e.get("prior"), e["timestamp"],
+        )
+        for e, emb in regular_items
+    ])
 
-    await asyncio.gather(*[check_new(user_id, node["id"]) for node in episodic_nodes])
+    for e, emb in sorted(episodic_items, key=lambda x: x[0].get("timestamp", "")):
+        node = await _create_episodic_node(
+            g,
+            {"text": e["text"], "intensity": e["intensity"], "valence": e["valence"]},
+            emb, e.get("prior"), e["timestamp"],
+        )
+        await check_new(user_id, node["id"])
     promoted = await promote(user_id)
 
     return {"replayed": len(entries), "promoted": len(promoted)}

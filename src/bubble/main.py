@@ -22,7 +22,7 @@ from sklearn.metrics.pairwise import cosine_distances
 from .cluster import get_clusters
 from .db import get_graph, init_graph
 from .decomposer import decompose
-from .ingest import ingest
+from .ingest import ingest,replay
 from .promote import _promo_score, promote
 from .retrieve import retrieve
 
@@ -233,6 +233,9 @@ async def _reset(user_id: str) -> None:
     await g.query("MATCH (n) DETACH DELETE n")
     print(f"Graph bubble:{user_id} cleared.")
 
+async def _replay(user_id: str) -> None:
+    await init_graph(user_id)
+    await replay(user_id)
 
 _COMMANDS = {
     "decompose": (1, _decompose, "decompose <message> [prior]"),
@@ -242,6 +245,7 @@ _COMMANDS = {
     "diagnose":  (1, _diagnose,  "diagnose  <user_id>"),
     "status":    (1, _status,    "status    <user_id>"),
     "reset":     (1, _reset,     "reset     <user_id>"),
+    "replay":     (1, _replay,     "replay     <user_id>"),
 }
 
 
