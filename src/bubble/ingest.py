@@ -96,10 +96,10 @@ async def _route_segments(
 
     regular_nodes, episodic_nodes = await asyncio.gather(
         asyncio.gather(*[_store_segment(g, seg, emb, prior) for _, seg, emb in regular_items]),
-        asyncio.gather(*[_store_episodic(g, user_id, seg, emb, prior) for _, seg, emb in episodic_items]),
     )
-
-    await asyncio.gather(*[check_new(user_id, node["id"]) for node in episodic_nodes])
+    for _, seg, emb in episodic_items:
+        node = await _store_episodic(g, user_id, seg, emb, prior)
+        await check_new(user_id, node["id"])
 
     results: list[dict | None] = [None] * len(segments)
     for (i, _, _), node in zip(regular_items, regular_nodes):

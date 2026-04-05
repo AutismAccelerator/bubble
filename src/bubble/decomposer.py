@@ -38,7 +38,7 @@ Decompose a user message into atomic segments. Each segment must be \
 self-contained.
 Decompose when segments are independently meaningful beliefs; merge when one is
   sentiment, evaluation, or elaboration of the other.
-  
+
 For each segment output:
 - text: the atomic statement
 - intensity: 0.0–1.0  How much this moment will shape who this person is.
@@ -57,7 +57,7 @@ For each segment output:
       0.0–0.2  Trivial or purely factual. No personal stake.
       0.2–0.4  Passing reaction or hedged preference. Low commitment.
       0.4–0.6  Soft claim on a meaningful topic. Some personal weight.
-      0.6–0.8  explicit and clear stance with conviction.
+      0.6–0.8  Explicit and clear stance with conviction. Or significant enough, worth memorizing imediately.
       0.8–1.0  Trajectory-defining — identity, deeply held beliefs, major life events.
 
 - valence: pos | neg | neu
@@ -69,8 +69,9 @@ For each segment output:
     
 Rules:
 - Strip specific time references. Keep generalized frequency and scope qualifiers.
-- If a <prior> block is provided, use it only as context. All pronouns, referents must be resolved.\
-- Call record_segments with your result.\
+- If a <prior> block is provided, use it only as context, Speakers are prefixed with [Name]. 
+- All pronouns, referents must be resolved.
+- Call record_segments with your result.
 - Return empty array if the message is purely functional, transient, or contain no personal signal — commands, greetings, filler, or factual queries.
 
 Edge Cases:

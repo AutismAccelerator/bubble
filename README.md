@@ -113,6 +113,14 @@ import bubble
 memory_user = await bubble.retrieve(user_id, query)
 ```
 
+## Replayability 
+How can I forget the most important part of Event Sourcing :)
+Memory episodes are archived in `<project root>/data/archive` as jsonl
+You can reconstruct your whole memory graph by a single command ! WITHOUT A SINGLE LLM CALL !
+```python
+python -m bubble.main replay <user_id>
+```
+
 ## Tuning/Customization
 See [.env.example](.env.example) for ALL tunable arguments.
 
@@ -120,4 +128,5 @@ See [.env.example](.env.example) for ALL tunable arguments.
 Bubble is an experimental project, not a production library.\
 See [arxiv](link) for detailed specification.\
 **[Discord](https://discord.com/users/1319641673990672477)**\
-Contributions are welcome.
+\
+Give a star if you like this work. Contributions are welcome.
