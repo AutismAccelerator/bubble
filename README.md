@@ -87,7 +87,7 @@ docker run --name tei-nli -d -p 8999:80 -v /mnt/g/docker-data/volumes/tei:/data 
 ```
 
 
-### necessary configuration in your .env file
+### Necessary configuration in your .env file
 ```python
 ANTHROPIC_API_KEY=
 FALKORDB_HOST=localhost
@@ -117,7 +117,7 @@ memory_user = await bubble.retrieve(user_id, query)
 See [.env.example](.env.example) for ALL tunable arguments.
 
 ## Limitations
-Bubble is an experimental project, not a production library. 
-See [arxiv](link) for detailed specification.
-**[Discord](https://discord.com/users/1319641673990672477)**
+Bubble is an experimental project, not a production library.\
+See [arxiv](link) for detailed specification.\
+**[Discord](https://discord.com/users/1319641673990672477)**\
 Contributions are welcome.
