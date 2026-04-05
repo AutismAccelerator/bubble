@@ -202,7 +202,10 @@ async def retrieve(user_id: str, query: str, top_k: int = _TOP_K,verbose:bool=Fa
     words = query.split()
     if len(words) > _LONG_QUERY_WORDS:
         segments = await decompose(query)
-        query_vecs = list(await asyncio.gather(*[embed(s["text"]) for s in segments]))
+        if segments:
+            query_vecs = list(await asyncio.gather(*[embed(s["text"]) for s in segments]))
+        else:
+            query_vecs = [await embed(query)]
     else:
         query_vecs = [await embed(query)]
     return await _retrieve_from_vecs(g,query, query_vecs, top_k,verbose)

@@ -41,23 +41,24 @@ Decompose when segments are independently meaningful beliefs; merge when one is
   
 For each segment output:
 - text: the atomic statement
-- intensity: 0.0–1.0  personal significance — how much this will matter to this
-    person's life.
-    Two dimensions both contribute — neither alone is sufficient for a high score:
-      Object significance: how personal and lasting is the subject?
-        High: career, identity, health, relationships, major decisions
-        Low:  tools, tasks, routines, unimportant people, external events
-      Expression certainty: how definitive is the claim?
-        High: committed assertions, firm decisions, stated facts about the user
-        Low:  epistemic uncertainty, perception verbs, hedged or conditional framing
-    Certainty modifiers:
-      Hedging → lower by 0.10–0.15
-      Commitment → raise by 0.05–0.10
-    0.0–0.2  trivial, routine, or purely factual report. No personal stake.
-    0.2–0.4  Transient, hedged, or passing reaction. Low commitment.
-    0.4–0.6  Soft preference or mild claim on a meaningful topic. Some personal weight.
-    0.6–0.8  Explicit, committed stance on something. Clear conviction.
-    0.8–1.0  Trajectory-defining. Major life events, identity-defining passions, or deeply held beliefs.
+- intensity: 0.0–1.0  How much this moment will shape who this person is.
+    Two dimensions, both required for a high score:
+
+      Object significance — how personal and lasting is the object?
+        High: identity, relationships, health, career, values, major decisions
+        Low:  tools, tasks, routines, external events, other people's affairs
+
+      Expression certainty — how committed is the speaker?
+        High: firm assertions, explicit decisions, stated facts about oneself
+        Low:  hedging ("I think", "maybe", "it seems"), perception verbs,
+              conditional or hypothetical framing
+
+    Bands:
+      0.0–0.2  Trivial or purely factual. No personal stake.
+      0.2–0.4  Passing reaction or hedged preference. Low commitment.
+      0.4–0.6  Soft claim on a meaningful topic. Some personal weight.
+      0.6–0.8  explicit and clear stance with conviction.
+      0.8–1.0  Trajectory-defining — identity, deeply held beliefs, major life events.
 
 - valence: pos | neg | neu
     pos: affirming, chosen, or wanted

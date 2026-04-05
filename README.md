@@ -72,7 +72,7 @@ Built on event sourcing — the archive is the ground truth, the graph is always
 ```bash
 docker run -e REDIS_ARGS="--appendonly yes --appendfsync everysec" -v <PATH>:/var/lib/falkordb/data -p 3000:3000 -p 6379:6379 -d --name falkordb falkordb/falkordb
 ```
-### 2.embedding model
+### 2.embedding model(Matryoshka)
 **note: command below is cpu version**
 ```bash
 docker run --name tei-embedding -d -p 8997:80 -v <PATH>:/data --pull always ghcr.io/huggingface/text-embeddings-inference:cpu-latest --model-id nomic-ai/nomic-embed-text-v1.5
@@ -112,6 +112,8 @@ prior: the context of the content, for example prior messages
 import bubble
 memory_user = await bubble.retrieve(user_id, query)
 ```
+
+
 
 ## Tuning
 See [.env.example](.env.example) for ALL tunable arguments.
