@@ -147,7 +147,7 @@ async def _recompute_snapshot_centroid(g, snap_id: str) -> None:
         return
     new_centroid = _normalize(np.array(centroids, dtype=np.float32).mean(axis=0))
     await g.query(
-        "MATCH (snap:SnapshotNode {id: $id}) SET snap.centroid = $centroid",
+        "MATCH (snap:SnapshotNode {id: $id}) SET snap.centroid = vecf32($centroid)",
         {"id": snap_id, "centroid": new_centroid},
     )
 
@@ -166,7 +166,7 @@ async def _create_snapshot(g, episode_id: str, summary: str, centroid: list[floa
     snap_id = str(uuid.uuid4())
     await g.query(
         "CREATE (snap:SnapshotNode {"
-        "  id: $id, summary: $summary, centroid: $centroid, valid: true, timestamp: $ts"
+        "  id: $id, summary: $summary, centroid: vecf32($centroid), valid: true, timestamp: $ts"
         "})",
         {"id": snap_id, "summary": summary, "centroid": centroid, "ts": _now()},
     )

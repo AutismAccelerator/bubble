@@ -68,7 +68,7 @@ async def promote(user_id: str, theta: float = _PROMOTE_THRESHOLD) -> list[dict]
             "  id: $id,"
             "  summary: $summary,"
             "  confidence: $confidence,"
-            "  centroid: $centroid,"
+            "  centroid: vecf32($centroid),"
             "  valence: $valence,"
             "  episodic: false,"
             "  timestamp: $ts"

@@ -35,7 +35,7 @@ from .promote import promote
 from .retrieve import _retrieve_from_vecs, retrieve
 
 
-async def observe(user_id: str, message: str, prior: str | None = None, top_k: int = 5) -> dict:
+async def observe(user_id: str, message: str, prior: str | None = None, top_k: int = 3, verbose: bool = False) -> dict:
     """
     Decompose once, retrieve relevant memories, then store — all in a single call.
 
@@ -48,13 +48,12 @@ async def observe(user_id: str, message: str, prior: str | None = None, top_k: i
         "stored":    [...],  # same format as process()
       }
     """
-    segments   = await _decompose(message, prior)
+    segments = await _decompose(message, prior)
     embeddings = list(await asyncio.gather(*[_embed(s["text"]) for s in segments]))
 
     g = get_graph(user_id)
-    retrieved = await _retrieve_from_vecs(g, message, embeddings, top_k)
-    stored    = await _route_segments(user_id, segments, embeddings, prior)
-
+    stored = await _route_segments(user_id, segments, embeddings, prior)
+    retrieved = await _retrieve_from_vecs(g, message, embeddings, top_k, verbose)
     return {"retrieved": retrieved, "stored": stored}
 
 
@@ -69,7 +68,7 @@ async def process(user_id: str, message: str, prior: str | None = None) -> list[
     prior: optional conversational context the user is responding to.
     Returns the list of created node descriptors.
     """
-    nodes= await ingest(user_id, message, prior)
+    nodes = await ingest(user_id, message, prior)
     await promote(user_id)
     return nodes
 

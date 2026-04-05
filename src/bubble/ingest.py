@@ -51,7 +51,7 @@ async def _create_episodic_node(
         "  id: $id,"
         "  summary: $summary,"
         "  confidence: $confidence,"
-        "  centroid: $centroid,"
+        "  centroid: vecf32($centroid),"
         "  valence: $valence,"
         "  episodic: true,"
         "  timestamp: $ts"

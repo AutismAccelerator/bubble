@@ -94,6 +94,7 @@ async def _status(user_id: str) -> None:
 
 
 async def _query(user_id: str, query: str) -> None:
+    await init_graph(user_id)
     results = await retrieve(user_id, query)
     if not results:
         print("No relevant memory found.")
