@@ -113,9 +113,11 @@ import bubble
 memory_user = await bubble.retrieve(user_id, query)
 ```
 
-
-
-## Tuning
+## Tuning/Customization
 See [.env.example](.env.example) for ALL tunable arguments.
 
-Highly customizable !
+## Limitations
+Bubble is an experimental project, not a production library. 
+See [arxiv](link) for detailed specification.
+**[Discord](https://discord.com/users/1319641673990672477)**
+Contributions are welcome.
