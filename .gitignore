@@ -10,4 +10,6 @@ wheels/
 .venv
 data/
 docs/
-tuning.md
+CLAUDE.md
+.vscode/
+.claude/
