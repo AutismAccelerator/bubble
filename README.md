@@ -93,6 +93,12 @@ BUBBLE_NLI_ENDPOINT=http://localhost:8999/predict
 ```
 
 ## How to use (extremely easy and clean)
+### installation
+```bash
+pip install bubble-memory
+or
+uv add bubble-memory
+```
 ### ingest
 ```python
 import bubble
