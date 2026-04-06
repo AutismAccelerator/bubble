@@ -75,7 +75,7 @@ Or embedding cloud api
 ### 3.NLI model(Optional, but recommended, saves some LLM calls)
 **note: command below is cpu version**
 ```bash
-docker run --name tei-nli -d -p 8999:80 -v /mnt/g/docker-data/volumes/tei:/data --pull always ghcr.io/huggingface/text-embeddings-inference:cpu-latest --model-id cross-encoder/nli-deberta-v3-small
+docker run --name tei-nli -d -p 8999:80 -v <PATH>:/data --pull always ghcr.io/huggingface/text-embeddings-inference:cpu-latest --model-id cross-encoder/nli-deberta-v3-small
 ```
 
 
@@ -116,7 +116,7 @@ python -m bubble.main replay <user_id>
 See [.env.example](.env.example) for ALL tunable arguments.
 
 ## Limitations
-Bubble is currently an experimental project, not a production library.\
+Bubble is currently an experimental project for personal use.\
 Current `promotion formula`, env vars might not be the best.
 `prompts` might have much room to improve. Patch **bubble.decomposer._SYSTEM** if it doesn't fit your use case.\
 \
