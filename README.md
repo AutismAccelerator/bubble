@@ -1,16 +1,8 @@
 # Bubble
-
-**Belief formation as memory for AI agents.**
-
-Most memory systems index everything and retrieve later. Bubble treats memory as a *formation* problem: a single weak signal is noise; a signal that returns from different directions, at different moments, with consistent weight, becomes belief.
-
-Built on event sourcing — the archive is the ground truth, the graph is always reconstructible from it. 
+**Event Sourcing based belief formation system for long-term AI agent memory**
+**[arxiv](link)**   **[Discord](https://discord.com/users/1319641673990672477)**
 
 ---
-
-## Paper
-
-[Bubble: Belief Formation as Memory](link) — arXiv preprint
 
 ## How it works
 ```
@@ -114,8 +106,7 @@ memory_user = await bubble.retrieve(user_id, query)
 ```
 
 ## Replayability 
-How can I forget the most important part of Event Sourcing :)
-Memory episodes are archived in `<project root>/data/archive` as jsonl
+Memory episodes are archived in `<project root>/data/archive` as jsonl\
 You can reconstruct your whole memory graph by a single command ! WITHOUT A SINGLE LLM CALL !
 ```python
 python -m bubble.main replay <user_id>
@@ -125,8 +116,8 @@ python -m bubble.main replay <user_id>
 See [.env.example](.env.example) for ALL tunable arguments.
 
 ## Limitations
-Bubble is an experimental project, not a production library.\
-See [arxiv](link) for detailed specification.\
-**[Discord](https://discord.com/users/1319641673990672477)**\
+Bubble is currently an experimental project, not a production library.\
+Current `promotion formula`, env vars might not be the best.
+`prompts` might have much room to improve. Patch **bubble.decomposer._SYSTEM** if it doesn't fit your use case.\
 \
-Give a star if you like this work. Contributions are welcome.
+Leave a star if you like this work. Contributions are welcome.
