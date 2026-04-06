@@ -1,6 +1,6 @@
 # Bubble
 **Event Sourcing based belief formation system for long-term AI agent memory**
-**[arxiv](link)**   **[Discord](https://discord.com/users/1319641673990672477)**
+**[paper](https://doi.org/10.5281/zenodo.19438945)**   **[Discord](https://discord.com/users/1319641673990672477)**
 
 ---
 
