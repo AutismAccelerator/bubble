@@ -1,8 +1,8 @@
 # Bubble
 ## Core Idea
-1. Intensity gating.Not everything equally worths to be remembered. The more trivial the more accumulation needed in order to form a memory entry.\
-2. Input decomposition. Input is decomposed into atomic segments that reserve its original meaning, only highly related segments will cluster to form episodes which provide high precision retrieval.\
-3. Replayablity.Human memory is an event sourcing program, under the same experience, nearly identical personality would emerge again.\
+1. Intensity gating.Not everything equally worths to be remembered. The more trivial the more accumulation needed in order to form a memory entry.
+2. Input decomposition. Input is decomposed into atomic segments that reserve its original meaning, only highly related segments will cluster to form episodes which provide high precision retrieval.
+3. Replayablity.Human memory is an event sourcing program, under the same experience, nearly identical personality would emerge again.
 4. Light weight and Minimal LLM call.\
 **[paper](https://doi.org/10.5281/zenodo.19438945)**
 
