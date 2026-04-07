@@ -1,9 +1,10 @@
 # Bubble
+A memory system lets your chatbot truly know you and maybe themselves.
 ## Core Idea
-1. Intensity gating.Not everything equally worths to be remembered. The more trivial the more accumulation needed in order to form a memory entry.
-2. Input decomposition. Input is decomposed into atomic segments that reserve its original meaning, only highly related segments will cluster to form episodes which provide high precision retrieval.
-3. Replayablity.Human memory is an event sourcing program, under the same experience, nearly identical personality would emerge again.
-4. Light weight and Minimal LLM call.\
+1. Intensity gating. Not everything is equally worth remembering. The more trivial the more accumulation needed in order to form a memory entry.
+2. Input decomposition. Input is decomposed into atomic segments that preserve their original meaning, only highly related segments will cluster to form episodes which provide high precision retrieval.
+3. Replayability. Human memory functions like an event-sourcing system, under the same experience, nearly identical personality would emerge again.
+4. Lightweight and minimal LLM calls.\
 **[paper](https://doi.org/10.5281/zenodo.19438945)**
 
 ---
