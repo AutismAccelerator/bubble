@@ -1,6 +1,10 @@
 # Bubble
-**Event Sourcing based belief formation system for long-term AI agent memory**
-**[paper](https://doi.org/10.5281/zenodo.19438945)**   **[Discord](https://discord.com/users/1319641673990672477)**
+## Core Idea
+1. Intensity gating.Not everything equally worths to be remembered. The more trivial the more accumulation needed in order to form a memory entry.\
+2. Input decomposition. Input is decomposed into atomic segments that reserve its original meaning, only highly related segments will cluster to form episodes which provide high precision retrieval.\
+3. Replayablity.Human memory is an event sourcing program, under the same experience, nearly identical personality would emerge again.\
+4. Light weight and Minimal LLM call.\
+**[paper](https://doi.org/10.5281/zenodo.19438945)**
 
 ---
 
@@ -123,7 +127,7 @@ See [.env.example](.env.example) for ALL tunable arguments.
 
 ## Limitations
 Bubble is currently an experimental project for personal use.\
-Current `promotion formula`, env vars might not be the best.
+Current `promotion formula`, tunable variables might not be the best.\
 `prompts` might have much room to improve. Patch **bubble.decomposer._SYSTEM** if it doesn't fit your use case.\
 \
 Leave a star if you like this work. Contributions are welcome.
