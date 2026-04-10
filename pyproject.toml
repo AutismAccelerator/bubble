@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bubble-memory"
-version = "0.11"
+version = "0.11.1"
 description = "Event Sourcing based belief formation system for long-term AI agent memory"
 readme = "README.md"
 requires-python = ">=3.11"

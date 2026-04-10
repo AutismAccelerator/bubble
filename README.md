@@ -107,7 +107,7 @@ BUBBLE_EMBED_DIM=768
 BUBBLE_EMBED_ENDPOINT=http://localhost:8997/v1/embeddings
 
 #If you have NLI setup
-BUBBLE_ENABLE_NLI=false
+BUBBLE_ENABLE_NLI=true
 BUBBLE_NLI_ENDPOINT=http://localhost:8999/predict
 ```
 
