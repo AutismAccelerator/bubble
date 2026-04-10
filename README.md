@@ -132,7 +132,7 @@ memory_user = await bubble.retrieve(user_id, query)
 
 ## Replayability 
 Memory episodes are archived in `<project root>/data/archive` as jsonl\
-You can reconstruct your whole memory graph by a single command ! WITHOUT A SINGLE LLM CALL !
+You can reconstruct your memory graph by a single command. No LLM call.
 ```python
 python -m bubble.main replay <user_id>
 ```
@@ -143,6 +143,6 @@ See [.env.example](.env.example) for ALL tunable arguments.
 ## Limitations
 Bubble is currently an experimental project for personal use.\
 Current `promotion formula`, tunable variables might not be the best.\
-`prompts` might have much room to improve. Patch **bubble.decomposer._SYSTEM** if it doesn't fit your use case.\
+Swap out **bubble.llm.prompts.DECOMPOSE_SYSTEM** if it doesn't fit your use case.\
 \
 Leave a star if you like this work. Contributions are welcome.
