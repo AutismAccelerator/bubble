@@ -1,16 +1,21 @@
+"""
+promote.py — Layer 0 → Layer 1 promotion pipeline.
+"""
+
 import asyncio
 import math
-import os
 import uuid
 from collections import Counter
 
-from ._shared import _centroid, _now, _summarize
+from ._shared import _centroid, _now
 from .archive import write_segment
 from .cluster import get_clusters
 from .chain import check_new
 from .db import get_graph
+from .llm import get_llm
+from . import config
 
-_PROMOTE_THRESHOLD = float(os.getenv("BUBBLE_PROMOTE_THRESHOLD", "0.2"))
+_PROMOTE_THRESHOLD = config.PROMOTE_THRESHOLD
 
 
 def _promo_score(nodes: list[dict]) -> tuple[float, float]:
@@ -57,7 +62,7 @@ async def promote(user_id: str, theta: float = _PROMOTE_THRESHOLD) -> list[dict]
     if not qualifying:
         return []
 
-    summaries = await asyncio.gather(*[_summarize(nodes) for nodes, *_ in qualifying])
+    summaries = await asyncio.gather(*[get_llm().summarize(nodes) for nodes, *_ in qualifying])
 
     ts = _now()
     episode_ids = [str(uuid.uuid4()) for _ in qualifying]

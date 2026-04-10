@@ -1,17 +1,17 @@
 import asyncio
 import logging
-import os
 import uuid
 
 from .archive import read_segments, write_segment
-from ._shared import _now, _summarize
+from ._shared import _now
 from .chain import check_new
 from .db import get_graph
 from .embed import embed
 from .decomposer import decompose
+from . import config
 
 log = logging.getLogger(__name__)
-_EPISODIC_THRESHOLD = float(os.getenv("BUBBLE_EPISODIC_THRESHOLD", "0.6"))
+_EPISODIC_THRESHOLD = config.EPISODIC_THRESHOLD
 
 
 async def _store_segment(
@@ -94,12 +94,15 @@ async def _route_segments(
     regular_items  = [(i, seg, emb) for i, (seg, emb) in enumerate(zip(segments, embeddings))
                       if seg["intensity"] < _EPISODIC_THRESHOLD]
 
-    regular_nodes, episodic_nodes = await asyncio.gather(
-        asyncio.gather(*[_store_segment(g, seg, emb, prior) for _, seg, emb in regular_items]),
+    regular_nodes = await asyncio.gather(
+        *[_store_segment(g, seg, emb, prior) for _, seg, emb in regular_items]
     )
+
+    episodic_nodes = []
     for _, seg, emb in episodic_items:
         node = await _store_episodic(g, user_id, seg, emb, prior)
         await check_new(user_id, node["id"])
+        episodic_nodes.append(node)
 
     results: list[dict | None] = [None] * len(segments)
     for (i, _, _), node in zip(regular_items, regular_nodes):

@@ -1,17 +1,16 @@
+"""
+archive.py — JSONL segment archive for bubble's event-sourcing replay.
+"""
+
 import json
-import os
 from pathlib import Path
 
-_ARCHIVE_DIR = os.getenv("BUBBLE_ARCHIVE_DIR", "./data/archive")
-_MKDIR_DONE = False
+from . import config
 
 
 def _path(user_id: str) -> Path:
-    global _MKDIR_DONE
-    p = Path(_ARCHIVE_DIR)
-    if not _MKDIR_DONE:
-        p.mkdir(parents=True, exist_ok=True)
-        _MKDIR_DONE = True
+    p = Path(config.ARCHIVE_DIR)
+    p.mkdir(parents=True, exist_ok=True)
     return p / f"{user_id}.jsonl"
 
 

@@ -1,25 +1,14 @@
-import os
+"""
+_shared.py — pure utility functions shared across the bubble pipeline.
+
+This module no longer holds any LLM client or model constants.
+See bubble.llm for the LLM abstraction layer.
+See bubble.config for all environment configuration.
+"""
+
 from datetime import datetime, timezone
 
 import numpy as np
-from anthropic import AsyncAnthropic
-from dotenv import load_dotenv
-
-load_dotenv()
-
-MODEL = os.getenv("BUBBLE_MODEL", "claude-sonnet-4-6")
-_client = AsyncAnthropic()
-
-_SUMMARIZE_SYSTEM = """\
-You distill one or more user statements into a single memory record.
-
-Rules:
-- Capture the belief, preference, event, or tendency the statements express.
-- When multiple statements are given, identify the common pattern they share.
-- Write exactly one sentence with no grammatical subject.
-- Start with a verb or descriptor that names the belief, event, or pattern.
-- Do not explain, qualify, or ask for clarification.\
-"""
 
 
 def _now() -> str:
@@ -36,14 +25,3 @@ def _centroid(nodes: list[dict]) -> list[float]:
     """Mean of source embeddings, L2-normalized."""
     matrix = np.array([n["embedding"] for n in nodes], dtype=np.float32)
     return _normalize(matrix.mean(axis=0))
-
-
-async def _summarize(nodes: list[dict]) -> str:
-    texts = "\n".join(f"- {n['raw_text']}" for n in nodes)
-    response = await _client.messages.create(
-        model=MODEL,
-        max_tokens=128,
-        system=_SUMMARIZE_SYSTEM,
-        messages=[{"role": "user", "content": texts}],
-    )
-    return response.content[0].text.strip()

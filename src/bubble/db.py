@@ -1,8 +1,11 @@
-import os
-from dotenv import load_dotenv
+"""
+db.py — FalkorDB graph client and user-graph accessor.
+"""
+
 from falkordb.asyncio import FalkorDB
 
-load_dotenv()
+from . import config
+from .embed import EMBED_DIM
 
 _client: FalkorDB | None = None
 
@@ -11,8 +14,8 @@ def get_client() -> FalkorDB:
     global _client
     if _client is None:
         _client = FalkorDB(
-            host=os.getenv("FALKORDB_HOST", "localhost"),
-            port=int(os.getenv("FALKORDB_PORT", "6379")),
+            host=config.FALKORDB_HOST,
+            port=config.FALKORDB_PORT,
         )
     return _client
 
@@ -25,8 +28,6 @@ async def init_graph(user_id: str) -> None:
     """Create indexes for a user graph. Safe to call on an already-initialized graph."""
     g = get_graph(user_id)
 
-    from .embed import EMBED_DIM
-
     # HNSW vector index on SnapshotNode.centroid — retrieval (L2 entry point).
     try:
         await g.query(
@@ -37,8 +38,6 @@ async def init_graph(user_id: str) -> None:
         pass  # already exists
 
     # HNSW vector index on Episode.centroid — chain assignment ANN search.
-    # Used by check_new (chain.py) to find the nearest existing Episode
-    # for the three-gate chain assignment cascade.
     try:
         await g.query(
             "CREATE VECTOR INDEX FOR (n:Episode) ON (n.centroid) "

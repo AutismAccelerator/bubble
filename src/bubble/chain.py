@@ -1,5 +1,5 @@
 """
-Chain assignment pipeline — spec §3.8.
+chain.py — Chain assignment pipeline.
 
 When a new Episode is created, assign it to a topic chain:
   1 — ANN top-1 against Episode centroids.
@@ -8,29 +8,15 @@ When a new Episode is created, assign it to a topic chain:
   4 — Related → traverse FOLLOWED_BY edges to chain tail, wire FOLLOWED_BY edge, join SnapshotNode.
 """
 
-import os
 import uuid
 
 import numpy as np
+import httpx
 
-from ._shared import MODEL, _client, _normalize, _now
+from . import config
+from ._shared import _normalize, _now
 from .db import get_graph
-
-_CHAIN_MAX_DISTANCE = float(os.getenv("BUBBLE_CHAIN_MAX_DISTANCE", "0.4"))
-_NLI_ENABLED = os.getenv("BUBBLE_ENABLE_NLI", "false").lower() == "true"
-_NLI_ENDPOINT = os.getenv("BUBBLE_NLI_ENDPOINT", "http://localhost:8999/predict")
-
-_SNAPSHOT_SYSTEM = """\
-A sequence of memory records about the user is listed below, from earliest to most recent.
-
-Rules:
-- The most recent memory takes precedence over earlier ones.
-- Earlier memory provides historical context.
-- Synthesize all memory into a single simplified coherent narrative that represents the full arc.
-- Output one concise paragraph.
-- No subject, start with verb.
-- Do not explain or justify.\
-"""
+from .llm import get_llm
 
 # ---------------------------------------------------------------------------
 # Relatedness check (LLM or NLI)
@@ -40,41 +26,21 @@ Rules:
 async def _related(summary_a: str, summary_b: str) -> bool:
     """True if the two summaries are about the same topic.
 
-    BUBBLE_CHAIN_BACKEND=nli  — local NLI model, argmax != neutral → related.
-    BUBBLE_CHAIN_BACKEND=llm  — LLM yes/no (default).
+    config.NLI_ENABLED=True  — local NLI model, argmax != neutral → related.
+    config.NLI_ENABLED=False — LLM yes/no (default).
     """
-    if _NLI_ENABLED:
-        import httpx
-
+    if config.NLI_ENABLED:
         async with httpx.AsyncClient() as client:
             resp = await client.post(
-                _NLI_ENDPOINT,
+                config.NLI_ENDPOINT,
                 json={"inputs": [summary_a, summary_b]},
                 headers={"Content-Type": "application/json", "Accept": "application/json"},
             )
             resp.raise_for_status()
-            scores = resp.json()  # [{"label": ..., "score": ...}, ...]
+            scores = resp.json()  # [{\"label\": ..., \"score\": ...}, ...]
         return max(scores, key=lambda x: x["score"])["label"].lower() != "neutral"
 
-    answer = (
-        (
-            await _client.messages.create(
-                model=MODEL,
-                max_tokens=8,
-                system="You are a memory topic classifier. Reply with exactly 'yes' or 'no'.",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": (f"Are these two beliefs about the same topic or subject?\n\nA: {summary_a}\nB: {summary_b}"),
-                    }
-                ],
-            )
-        )
-        .content[0]
-        .text.strip()
-        .lower()
-    )
-    return answer.startswith("y")
+    return await get_llm().relate(summary_a, summary_b)
 
 
 # ---------------------------------------------------------------------------
@@ -245,18 +211,7 @@ async def ensure_snapshot_summary(
                 label = f"Belief {i + 1}{tag}"
             lines.append(f"{label}: {m['summary']}")
 
-        new_summary = (
-            (
-                await _client.messages.create(
-                    model=MODEL,
-                    max_tokens=256,
-                    system=_SNAPSHOT_SYSTEM,
-                    messages=[{"role": "user", "content": "\n\n".join(lines)}],
-                )
-            )
-            .content[0]
-            .text.strip()
-        )
+        new_summary = await get_llm().synthesize(lines)
 
     await g.query(
         "MATCH (snap:SnapshotNode {id: $id}) SET snap.summary = $summary, snap.valid = true",
@@ -280,7 +235,7 @@ async def check_new(user_id: str, new_episode_id: str) -> None:
     if new_node is None or new_node["centroid"] is None:
         return
 
-    # Step 1 — ANN top-1 (k=3: self may occupy a slot if already indexed)
+    # Step 1 — ANN top-1 (k=2: self may occupy a slot if already indexed)
     result = await g.query(
         "CALL db.idx.vector.queryNodes('Episode', 'centroid', 2, vecf32($vec)) YIELD node, score WHERE node.id <> $id RETURN node.id, node.summary, score LIMIT 1",
         {"vec": new_node["centroid"], "id": new_episode_id},
@@ -294,11 +249,11 @@ async def check_new(user_id: str, new_episode_id: str) -> None:
     closest_id, closest_summary, score = result.result_set[0]
 
     # Step 2 — Similarity threshold
-    if score > _CHAIN_MAX_DISTANCE:
+    if score > config.CHAIN_MAX_DISTANCE:
         await _create_snapshot(g, new_episode_id, new_node["summary"], new_node["centroid"])
         return
 
-    # Step 3 — relatedness check
+    # Step 3 — Relatedness check
     if not await _related(new_node["summary"], closest_summary):
         await _create_snapshot(g, new_episode_id, new_node["summary"], new_node["centroid"])
         return

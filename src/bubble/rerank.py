@@ -1,11 +1,10 @@
-import os
+"""
+rerank.py — document reranking via the configured inference endpoint.
+"""
 
 import httpx
-from dotenv import load_dotenv
 
-load_dotenv()
-
-_RERANK_ENDPOINT = os.getenv("BUBBLE_RERANK_ENDPOINT", "http://localhost:8998/rerank")
+from . import config
 
 _http = httpx.AsyncClient(timeout=30.0)
 
@@ -15,10 +14,10 @@ async def rerank(query: str, texts: list[str]) -> list[float]:
     Score (query, document) pairs via the configured inference endpoint
     (OpenAI-compatible /v1/rerank, e.g. Infinity or HF TEI).
     Returns relevance scores in the same order as documents (higher = more relevant).
-    Configure via: BUBBLE_RERANK_ENDPOINT, BUBBLE_RERANK_MODEL.
+    Configure via: BUBBLE_RERANK_ENDPOINT.
     """
     response = await _http.post(
-        _RERANK_ENDPOINT,
+        config.RERANK_ENDPOINT,
         json={"query": query, "texts": texts},
         headers={"Content-Type": "application/json", "Accept": "application/json"},
     )

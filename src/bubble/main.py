@@ -13,16 +13,16 @@ Usage:
 
 import asyncio
 import json
-import os
 import sys
 
 import numpy as np
 from sklearn.metrics.pairwise import cosine_distances
 
+from . import config
 from .cluster import get_clusters
 from .db import get_graph, init_graph
 from .decomposer import decompose
-from .ingest import ingest,replay
+from .ingest import ingest, replay
 from .promote import _promo_score, promote
 from .retrieve import retrieve
 
@@ -109,12 +109,12 @@ async def _query(user_id: str, query: str) -> None:
 
 
 async def _diagnose(user_id: str, json_out: bool = False) -> None:
-    theta        = float(os.getenv("BUBBLE_PROMOTE_THRESHOLD", "0.2"))
-    min_cluster  = int(os.getenv("BUBBLE_CLUSTER_MIN_SIZE",   "3"))
-    t_similarity      = float(os.getenv("BUBBLE_T_SIMILARITY",     "0.4"))
-    cluster_join_sim  = float(os.getenv("BUBBLE_CLUSTER_JOIN_SIM", "0.7"))
-    nli_enabled       = os.getenv("BUBBLE_NLI_ENABLED", "false").lower() == "true"
-    nli_model         = os.getenv("BUBBLE_NLI_MODEL", "cross-encoder/nli-deberta-v3-small")
+    theta            = config.PROMOTE_THRESHOLD
+    min_cluster      = config.CLUSTER_MIN_SIZE
+    t_similarity     = config.T_SIMILARITY
+    cluster_join_sim = config.CLUSTER_JOIN_SIM
+    nli_enabled      = config.NLI_ENABLED
+    nli_model        = config.NLI_MODEL
 
     g = get_graph(user_id)
 
