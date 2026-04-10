@@ -86,14 +86,28 @@ docker run --name tei-nli -d -p 8999:80 -v <PATH>:/data --pull always ghcr.io/hu
 
 ### Necessary configuration in your .env file
 ```python
+# Provider to use: anthropic | openai | gemini  (default: anthropic)
+BUBBLE_LLM_PROVIDER=anthropic
+
+# Anthropic (install: pip install 'bubble-memory[anthropic]')
 ANTHROPIC_API_KEY=
+
+# OpenAI-compatible — works with OpenAI, DeepSeek, Groq, Ollama, etc.
+# (install: pip install 'bubble-memory[openai]')
+# OPENAI_API_KEY=
+# OPENAI_BASE_URL=https://api.openai.com/v1
+
+# Google Gemini (install: pip install 'bubble-memory[gemini]')
+# GEMINI_API_KEY=
+
 FALKORDB_HOST=localhost
 FALKORDB_PORT=6379
+
 BUBBLE_EMBED_DIM=768
 BUBBLE_EMBED_ENDPOINT=http://localhost:8997/v1/embeddings
 
 #If you have NLI setup
-BUBBLE_ENABLE_NLI=true
+BUBBLE_ENABLE_NLI=false
 BUBBLE_NLI_ENDPOINT=http://localhost:8999/predict
 ```
 
