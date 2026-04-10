@@ -143,6 +143,6 @@ See [.env.example](.env.example) for ALL tunable arguments.
 ## Limitations
 Bubble is currently an experimental project for personal use.\
 Current `promotion formula`, tunable variables might not be the best.\
-Swap out **bubble.llm.prompts.DECOMPOSE_SYSTEM** if it doesn't fit your use case.\
+I use `[Name]` to identify speaker in group chat. Swap out **bubble.llm.prompts.DECOMPOSE_SYSTEM** if it doesn't fit your use case.\
 \
 Leave a star if you like this work. Contributions are welcome.
