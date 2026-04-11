@@ -141,6 +141,6 @@ python -m bubble.main replay <user_id>
 See [.env.example](.env.example) for ALL tunable arguments.
 
 ## Limitations
-Doesn't support long-context memory. It focuses on facts/preferences, and personality consolidation.
+Doesn't support long-context memory. It focuses on facts/preferences, and personality consolidation.\
 Current `promotion formula`, tunable variables might not be the best.\
-I use `[Name]` to identify speaker in group chat. Swap out **bubble.llm.prompts.DECOMPOSE_SYSTEM** if it doesn't fit your use case.\
+I use `[Name]` to identify speaker in group chat. Swap out **bubble.llm.prompts.DECOMPOSE_SYSTEM** if it doesn't fit your use case.
